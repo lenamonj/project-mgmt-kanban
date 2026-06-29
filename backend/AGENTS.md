@@ -9,7 +9,13 @@ FastAPI backend, managed with `uv`. Serves the static frontend at `/` and the AP
 
 ## Structure
 
-- `app/main.py` - FastAPI app. Endpoints: `GET /api/health`; `POST /api/login` / `POST /api/logout` / `GET /api/me` (auth); `GET /api/board` / `PUT /api/board` (auth, Pydantic `Board` validation); `POST /api/chat` (auth, AI). Inits the DB on startup (lifespan). The `/` mount serves the static frontend (API routes registered before the mount so `/api/*` keeps precedence)
+- `app/main.py` - app assembly: builds the FastAPI app, adds `SessionMiddleware`, inits the DB on startup (lifespan), defines `GET /api/health`, includes the routers, and mounts the static frontend at `/` (registered after the routers so `/api/*` keeps precedence)
+- `app/config.py` - env-derived settings: `SESSION_SECRET`, `HTTPS_ONLY`, `STATIC_DIR`, and the MVP `USERNAME` / `PASSWORD`
+- `app/schemas.py` - Pydantic models: `Credentials`, `Card`, `Column`, `Board`, `ChatMessage`, `ChatRequest`, `ChatResponse`
+- `app/dependencies.py` - `require_user` session dependency (401 if no session)
+- `app/routers/auth.py` - `POST /api/login` / `POST /api/logout` / `GET /api/me`
+- `app/routers/board.py` - `GET /api/board` / `PUT /api/board` (Pydantic `Board` validation)
+- `app/routers/chat.py` - `POST /api/chat`: `SYSTEM_PROMPT`, `build_chat_messages`, the AI call, and persisting `board_update`
 - `app/db.py` - stdlib `sqlite3` layer: idempotent schema, `get_or_create_user`, `get_board` / `save_board` (JSON `data` column, upsert on `user_id`), `get_or_create_board` (seeds default on first access)
 - `app/seed.py` - `DEFAULT_BOARD`, mirroring `frontend/src/lib/kanban.ts` `initialData`
 - `app/ai.py` - OpenRouter client via the OpenAI SDK (`base_url` OpenRouter, model `openai/gpt-oss-120b`). `chat(messages, response_format=None)` and `two_plus_two()` connectivity check. Loads repo-root `.env` for local runs
