@@ -17,8 +17,11 @@ export const AuthGate = () => {
   }, []);
 
   const handleLogout = async () => {
-    await logout();
-    setStatus("anon");
+    try {
+      await logout();
+    } finally {
+      setStatus("anon");
+    }
   };
 
   if (status === "loading") {

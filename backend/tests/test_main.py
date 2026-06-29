@@ -131,3 +131,20 @@ def test_chat_invalid_response_is_502(monkeypatch):
     monkeypatch.setattr(ai, "chat", lambda *a, **k: "not json at all")
     r = auth_client().post("/api/chat", json={"message": "hi"})
     assert r.status_code == 502
+
+
+def test_chat_upstream_failure_is_502(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("upstream down")
+
+    monkeypatch.setattr(ai, "chat", boom)
+    r = auth_client().post("/api/chat", json={"message": "hi"})
+    assert r.status_code == 502
+
+
+def test_chat_rejects_invalid_history_role():
+    r = auth_client().post(
+        "/api/chat",
+        json={"message": "hi", "history": [{"role": "system", "content": "x"}]},
+    )
+    assert r.status_code == 422

@@ -293,7 +293,9 @@ export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
               <KanbanColumn
                 key={column.id}
                 column={column}
-                cards={column.cardIds.map((cardId) => board.cards[cardId])}
+                cards={column.cardIds.flatMap((cardId) =>
+                  board.cards[cardId] ? [board.cards[cardId]] : []
+                )}
                 onRename={handleRenameColumn}
                 onAddCard={handleAddCard}
                 onDeleteCard={handleDeleteCard}

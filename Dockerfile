@@ -18,6 +18,14 @@ RUN uv sync --no-dev --frozen
 COPY backend/app ./app
 COPY --from=frontend /frontend/out ./app/static
 
+# Run as a non-root user. /app/data is the SQLite volume mount, owned by appuser.
+RUN adduser --system --no-create-home appuser \
+    && mkdir -p /app/data \
+    && chown -R appuser /app
+USER appuser
+# uv resolves at runtime and needs a writable HOME/cache (appuser owns /app).
+ENV HOME=/app UV_CACHE_DIR=/app/.cache/uv
+
 EXPOSE 8000
 
 CMD ["uv", "run", "--no-dev", "--frozen", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

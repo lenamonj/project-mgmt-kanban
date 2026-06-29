@@ -2,6 +2,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
@@ -21,14 +22,16 @@ app = FastAPI(title="Project Management Studio", lifespan=lifespan)
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.environ.get("SESSION_SECRET", "dev-secret-change-me"),
+    # Set HTTPS_ONLY=true behind TLS so the session cookie gets the Secure flag.
+    https_only=os.environ.get("HTTPS_ONLY", "").lower() == "true",
 )
 
 # Static dir is overridable so local e2e can point at frontend/out directly.
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", Path(__file__).parent / "static"))
 
-# Hardcoded MVP credentials.
-USERNAME = "user"
-PASSWORD = "password"
+# MVP credentials; overridable via env for any non-default deployment.
+USERNAME = os.environ.get("APP_USERNAME", "user")
+PASSWORD = os.environ.get("APP_PASSWORD", "password")
 
 
 class Credentials(BaseModel):
@@ -54,7 +57,7 @@ class Board(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    role: str
+    role: Literal["user", "assistant"]
     content: str
 
 
@@ -147,13 +150,15 @@ def write_board(board: Board, user: str = Depends(require_user)) -> Board:
 def chat(req: ChatRequest, user: str = Depends(require_user)) -> ChatResponse:
     user_id = db.get_or_create_user(user)
     board = db.get_or_create_board(user_id)
-    raw = ai.chat(
-        build_chat_messages(board, req), response_format={"type": "json_object"}
-    )
     try:
+        raw = ai.chat(
+            build_chat_messages(board, req), response_format={"type": "json_object"}
+        )
         result = ChatResponse.model_validate_json(raw)
     except ValidationError:
         raise HTTPException(status_code=502, detail="AI returned an invalid response")
+    except Exception:
+        raise HTTPException(status_code=502, detail="AI request failed")
     if result.board_update is not None:
         db.save_board(user_id, result.board_update.model_dump())
     return result

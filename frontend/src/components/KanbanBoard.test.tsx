@@ -26,7 +26,7 @@ describe("KanbanBoard", () => {
   it("renames a column", async () => {
     render(<KanbanBoard />);
     const column = await getFirstColumn();
-    const input = within(column).getByLabelText("Column title");
+    const input = within(column).getByLabelText(/column title/i);
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
     expect(input).toHaveValue("New Name");
