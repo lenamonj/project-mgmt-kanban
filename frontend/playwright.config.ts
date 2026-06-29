@@ -18,7 +18,9 @@ export default defineConfig({
   webServer: {
     command: "node e2e-server.mjs",
     url: "http://127.0.0.1:8000/api/health",
-    reuseExistingServer: true,
+    // Build and serve our own app locally; only reuse a running server in CI.
+    // Avoids silently testing against an unrelated process already on 8000.
+    reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
   projects: [
