@@ -18,7 +18,7 @@ A project management web app: a single-board Kanban with a built-in AI assistant
 
 - **Sign in** to reach your board, sign out to leave it
 - **Kanban board** with five columns whose titles can be renamed
-- **Cards** you can create, edit inline, delete, and drag between columns
+- **Cards** you can create, edit inline, delete, and drag between columns by mouse or keyboard
 - **AI assistant** in a sidebar that can create, edit, and move one or more cards in response to chat
 - **Persistent storage** so your board survives restarts
 
@@ -117,7 +117,9 @@ Environment variables (see `.env.example`):
 | Variable | Required | Description |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | Yes | API key for the AI assistant |
-| `SESSION_SECRET` | No | Signing key for the session cookie; a development default is used if unset |
+| `SESSION_SECRET` | No | Signing key for the session cookie; required for any non-local deployment, a development default is used if unset |
+| `APP_USERNAME` / `APP_PASSWORD` | No | Override the default login credentials (`user` / `password`) |
+| `HTTPS_ONLY` | No | Set to `true` when serving over TLS so the session cookie is marked Secure |
 | `DB_PATH` | No | SQLite file path; set automatically in Docker |
 
 ## Development
@@ -154,7 +156,7 @@ npm run test:e2e
 ```
 .
 ├── backend/            FastAPI app, database, AI client, tests
-│   └── app/            main.py, db.py, seed.py, ai.py, static/
+│   └── app/            main.py, config.py, schemas.py, dependencies.py, routers/, db.py, seed.py, ai.py, static/
 ├── frontend/           Next.js app (App Router), components, tests
 │   └── src/            app/, components/, lib/
 ├── scripts/            start/stop scripts for macOS, Linux, Windows
