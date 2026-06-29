@@ -11,8 +11,15 @@ type KanbanCardProps = {
 };
 
 export const KanbanCard = ({ card, onDelete, onEdit }: KanbanCardProps) => {
-  const { listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: card.id });
+  const {
+    listeners,
+    attributes,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(card.title);
   const [details, setDetails] = useState(card.details);
@@ -39,9 +46,11 @@ export const KanbanCard = ({ card, onDelete, onEdit }: KanbanCardProps) => {
     setEditing(false);
   };
 
-  // Drag is disabled while editing so the inputs receive pointer events. Only
-  // the drag listeners are applied (not dnd-kit's role="button" attributes,
-  // which would make the card a button wrapping the Edit/Delete buttons).
+  // Pointer drag works from anywhere on the card via listeners, disabled while
+  // editing so the inputs receive pointer events. dnd-kit's role="button"
+  // attributes go on the dedicated drag handle below rather than the article
+  // (which would nest the Edit/Delete buttons inside a button); the handle is
+  // the focusable activator that lets the KeyboardSensor start a keyboard drag.
   const dragProps = editing ? {} : listeners;
 
   return (
@@ -92,8 +101,30 @@ export const KanbanCard = ({ card, onDelete, onEdit }: KanbanCardProps) => {
           </div>
         </div>
       ) : (
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            ref={setActivatorNodeRef}
+            {...attributes}
+            aria-label={`Drag ${card.title}`}
+            className="mt-0.5 shrink-0 cursor-grab touch-none rounded-md p-1 text-[var(--gray-text)] transition hover:text-[var(--navy-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary-blue)]"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <circle cx="5" cy="3" r="1.2" />
+              <circle cx="9" cy="3" r="1.2" />
+              <circle cx="5" cy="7" r="1.2" />
+              <circle cx="9" cy="7" r="1.2" />
+              <circle cx="5" cy="11" r="1.2" />
+              <circle cx="9" cy="11" r="1.2" />
+            </svg>
+          </button>
+          <div className="flex-1">
             <h4 className="font-display text-base font-semibold text-[var(--navy-dark)]">
               {card.title}
             </h4>
