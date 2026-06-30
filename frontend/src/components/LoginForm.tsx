@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { login } from "@/lib/api";
+import { login, register } from "@/lib/api";
+
+type Mode = "signin" | "signup";
 
 export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
+  const [mode, setMode] = useState<Mode>("signin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -14,13 +17,24 @@ export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
     setError(null);
     setSubmitting(true);
     try {
-      await login(username, password);
+      if (mode === "signup") {
+        await register(username, password);
+      } else {
+        await login(username, password);
+      }
       onAuthed();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
     }
   };
+
+  const toggleMode = () => {
+    setMode((m) => (m === "signin" ? "signup" : "signin"));
+    setError(null);
+  };
+
+  const isSignup = mode === "signup";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
@@ -37,7 +51,7 @@ export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
             Project Management Studio
           </p>
           <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--navy-dark)]">
-            Sign in
+            {isSignup ? "Create account" : "Sign in"}
           </h1>
         </div>
 
@@ -60,7 +74,7 @@ export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            autoComplete="current-password"
+            autoComplete={isSignup ? "new-password" : "current-password"}
             className="rounded-xl border border-[var(--stroke)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--primary-blue)]"
           />
         </label>
@@ -76,7 +90,24 @@ export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
           disabled={submitting}
           className="rounded-xl bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
         >
-          {submitting ? "Signing in..." : "Sign in"}
+          {submitting
+            ? isSignup
+              ? "Creating..."
+              : "Signing in..."
+            : isSignup
+              ? "Create account"
+              : "Sign in"}
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleMode}
+          data-testid="toggle-auth-mode"
+          className="text-center text-xs font-semibold text-[var(--primary-blue)] transition hover:text-[var(--secondary-purple)]"
+        >
+          {isSignup
+            ? "Already have an account? Sign in"
+            : "New here? Create an account"}
         </button>
       </form>
     </div>

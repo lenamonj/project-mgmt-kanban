@@ -30,7 +30,7 @@ import { getBoard, saveBoard } from "@/lib/api";
 
 type LoadStatus = "loading" | "ready" | "error";
 
-export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
+export const KanbanBoard = ({ boardId }: { boardId: number }) => {
   const [board, setBoard] = useState<BoardData | null>(null);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [saveFailed, setSaveFailed] = useState(false);
@@ -40,21 +40,29 @@ export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
   const dirty = useRef(false);
   const dragStartBoard = useRef<BoardData | null>(null);
 
+  // KanbanBoard is mounted with key={boardId}, so each board gets a fresh
+  // instance starting from the loading state; no in-effect reset is needed.
   useEffect(() => {
-    getBoard()
-      .then((b) => {
-        setBoard(b);
+    let active = true;
+    getBoard(boardId)
+      .then((detail) => {
+        if (!active) return;
+        setBoard(detail.data);
         setStatus("ready");
       })
-      .catch(() => setStatus("error"));
-  }, []);
+      .catch(() => active && setStatus("error"));
+    return () => {
+      active = false;
+    };
+  }, [boardId]);
 
   useEffect(() => {
     if (!board || !dirty.current) return;
     dirty.current = false;
-    setSaveFailed(false);
-    saveBoard(board).catch(() => setSaveFailed(true));
-  }, [board]);
+    saveBoard(boardId, board)
+      .then(() => setSaveFailed(false))
+      .catch(() => setSaveFailed(true));
+  }, [board, boardId]);
 
   // Apply a user change locally and flag it for persistence.
   const update = (updater: (prev: BoardData) => BoardData) => {
@@ -207,7 +215,7 @@ export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-[var(--gray-text)]">
+      <div className="flex flex-1 items-center justify-center py-20 text-sm text-[var(--gray-text)]">
         Loading board...
       </div>
     );
@@ -215,80 +223,40 @@ export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
 
   if (status === "error" || !board) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-[var(--secondary-purple)]">
-        Could not load your board. Please refresh.
+      <div
+        data-testid="board-error"
+        className="flex flex-1 items-center justify-center py-20 text-sm text-[var(--secondary-purple)]"
+      >
+        Could not load this board. Please refresh.
       </div>
     );
   }
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
-  const totalCards = Object.keys(cardsById).length;
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.18)_0%,_rgba(117,57,145,0.05)_55%,_transparent_75%)]" />
-
-      <main className="relative mx-auto flex min-h-screen w-full max-w-[1760px] flex-col gap-6 px-4 pb-10 pt-6 sm:px-6 xl:px-10">
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--stroke)] bg-white/80 px-5 py-4 shadow-[var(--shadow)] backdrop-blur">
-          <div className="flex items-center gap-4">
-            <span
-              aria-hidden="true"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--navy-dark)] font-display text-sm font-bold tracking-wide text-white"
-            >
-              PM
-            </span>
-            <div>
-              <h1 className="font-display text-xl font-semibold leading-tight text-[var(--navy-dark)] sm:text-2xl">
-                Project Management Studio
-              </h1>
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[var(--gray-text)]">
-                Single board kanban
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {saveFailed ? (
-              <p
-                data-testid="save-failed"
-                className="text-xs font-semibold text-[var(--secondary-purple)]"
-              >
-                Changes could not be saved.
-              </p>
-            ) : null}
-            <div className="hidden items-baseline gap-1.5 rounded-full border border-[var(--stroke)] bg-[var(--surface)] px-4 py-2 sm:flex">
-              <span className="text-lg font-semibold leading-none text-[var(--primary-blue)]">
-                {totalCards}
-              </span>
-              <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
-                cards
-              </span>
-            </div>
-            {onLogout ? (
-              <button
-                type="button"
-                onClick={onLogout}
-                data-testid="logout-button"
-                className="rounded-full border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--navy-dark)] transition hover:border-[var(--secondary-purple)] hover:text-[var(--secondary-purple)]"
-              >
-                Log out
-              </button>
-            ) : null}
-          </div>
-        </header>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={collisionDetection}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
+    <div className="flex flex-1 flex-col gap-4">
+      {saveFailed ? (
+        <p
+          data-testid="save-failed"
+          className="rounded-xl border border-[var(--secondary-purple)] bg-white/70 px-4 py-2 text-xs font-semibold text-[var(--secondary-purple)]"
         >
-          <section className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
-            {board.columns.map((column) => (
+          Changes could not be saved.
+        </p>
+      ) : null}
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <section className="flex flex-1 items-stretch gap-4 overflow-x-auto pb-2">
+          {board.columns.map((column) => (
+            <div key={column.id} className="w-[300px] shrink-0">
               <KanbanColumn
-                key={column.id}
                 column={column}
                 cards={column.cardIds.flatMap((cardId) =>
                   board.cards[cardId] ? [board.cards[cardId]] : []
@@ -298,19 +266,19 @@ export const KanbanBoard = ({ onLogout }: { onLogout?: () => void } = {}) => {
                 onDeleteCard={handleDeleteCard}
                 onEditCard={handleEditCard}
               />
-            ))}
-          </section>
-          <DragOverlay>
-            {activeCard ? (
-              <div className="w-[260px]">
-                <KanbanCardPreview card={activeCard} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </main>
+            </div>
+          ))}
+        </section>
+        <DragOverlay>
+          {activeCard ? (
+            <div className="w-[260px]">
+              <KanbanCardPreview card={activeCard} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
-      <ChatSidebar onBoardUpdate={(next) => setBoard(next)} />
+      <ChatSidebar boardId={boardId} onBoardUpdate={(next) => setBoard(next)} />
     </div>
   );
 };

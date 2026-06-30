@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KanbanBoard } from "@/components/KanbanBoard";
+import { Workspace } from "@/components/Workspace";
 import { LoginForm } from "@/components/LoginForm";
 import { getMe, logout } from "@/lib/api";
 
@@ -9,17 +9,25 @@ type Status = "loading" | "authed" | "anon";
 
 export const AuthGate = () => {
   const [status, setStatus] = useState<Status>("loading");
+  const [username, setUsername] = useState<string | null>(null);
+
+  const refreshMe = () =>
+    getMe()
+      .then((me) => {
+        setUsername(me?.username ?? null);
+        setStatus(me ? "authed" : "anon");
+      })
+      .catch(() => setStatus("anon"));
 
   useEffect(() => {
-    getMe()
-      .then((me) => setStatus(me ? "authed" : "anon"))
-      .catch(() => setStatus("anon"));
+    refreshMe();
   }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
     } finally {
+      setUsername(null);
       setStatus("anon");
     }
   };
@@ -33,8 +41,8 @@ export const AuthGate = () => {
   }
 
   if (status === "anon") {
-    return <LoginForm onAuthed={() => setStatus("authed")} />;
+    return <LoginForm onAuthed={refreshMe} />;
   }
 
-  return <KanbanBoard onLogout={handleLogout} />;
+  return <Workspace username={username} onLogout={handleLogout} />;
 };

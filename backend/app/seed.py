@@ -1,5 +1,19 @@
-# Default board seeded for a new user. Mirrors initialData in
+# Default board seeded for a new user's first board. Mirrors initialData in
 # frontend/src/lib/kanban.ts.
+
+
+def new_board_data() -> dict:
+    """A fresh, empty board for additional boards a user creates. Mirrors
+    emptyBoard() in frontend/src/lib/kanban.ts."""
+    return {
+        "columns": [
+            {"id": "col-todo", "title": "To Do", "cardIds": []},
+            {"id": "col-progress", "title": "In Progress", "cardIds": []},
+            {"id": "col-done", "title": "Done", "cardIds": []},
+        ],
+        "cards": {},
+    }
+
 
 DEFAULT_BOARD = {
     "columns": [

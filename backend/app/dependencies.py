@@ -1,8 +1,8 @@
 from fastapi import HTTPException, Request
 
 
-def require_user(request: Request) -> str:
-    user = request.session.get("user")
-    if not user:
+def require_user_id(request: Request) -> int:
+    user_id = request.session.get("user_id")
+    if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+    return user_id

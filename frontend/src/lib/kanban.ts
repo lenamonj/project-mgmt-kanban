@@ -15,6 +15,24 @@ export type BoardData = {
   cards: Record<string, Card>;
 };
 
+export type BoardMeta = {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// A fresh, empty board for boards a user creates beyond their first. Mirrors
+// new_board_data() in backend/app/seed.py.
+export const emptyBoard = (): BoardData => ({
+  columns: [
+    { id: "col-todo", title: "To Do", cardIds: [] },
+    { id: "col-progress", title: "In Progress", cardIds: [] },
+    { id: "col-done", title: "Done", cardIds: [] },
+  ],
+  cards: {},
+});
+
 export const initialData: BoardData = {
   columns: [
     { id: "col-backlog", title: "Backlog", cardIds: ["card-1", "card-2"] },

@@ -15,7 +15,7 @@ test("shows a reply and applies an AI board update", async ({ page }) => {
   };
   updated.columns[0].cardIds.push("card-chat");
 
-  await page.route("**/api/chat", (route) =>
+  await page.route("**/api/boards/*/chat", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -33,7 +33,7 @@ test("shows a reply and applies an AI board update", async ({ page }) => {
 });
 
 test("replies without changing the board", async ({ page }) => {
-  await page.route("**/api/chat", (route) =>
+  await page.route("**/api/boards/*/chat", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",

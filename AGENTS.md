@@ -4,15 +4,16 @@ A project management web app: a single-board Kanban with a fake login and an AI 
 
 ## Features
 
-- Sign in with a single set of credentials
-- A Kanban board per signed-in user, with columns that can be renamed
+- Register an account or sign in; passwords are hashed (PBKDF2, standard library)
+- Multiple Kanban boards per user, switched from a board bar; boards can be created, renamed, and deleted
+- Columns that can be renamed
 - Cards that can be created, edited, deleted, and moved between columns with drag and drop
-- An AI chat sidebar that can create, edit, and move one or more cards
+- An AI chat sidebar, scoped to the active board, that can create, edit, and move one or more cards
 
 ## Scope
 
-- A single hardcoded login (`user` / `password`); the database schema supports multiple users
-- One board per user
+- Self-service registration plus a seeded default login (`user` / `password`)
+- Multiple boards per user; each board belongs to exactly one user
 - Runs locally in a Docker container
 
 ## Technology

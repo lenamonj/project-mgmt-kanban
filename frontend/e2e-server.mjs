@@ -21,7 +21,13 @@ const server = spawn(
   ["run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
   {
     cwd: backendDir,
-    env: { ...process.env, STATIC_DIR: outDir, SESSION_SECRET: "e2e-secret" },
+    env: {
+      ...process.env,
+      STATIC_DIR: outDir,
+      SESSION_SECRET: "e2e-secret",
+      // Isolated database so e2e is deterministic and never touches dev data.
+      DB_PATH: join(backendDir, "data", "e2e.sqlite3"),
+    },
     stdio: "inherit",
     shell: true,
   }

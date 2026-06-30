@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
+let boardId: number;
+
 test.beforeEach(async ({ page }) => {
-  await login(page);
+  boardId = await login(page);
 });
 
 async function dragCardToColumn(page, cardTestId: string, columnTestId: string) {
@@ -70,12 +72,12 @@ test("persists an added card across a reload", async ({ page }) => {
 
 test("moves a card into an emptied column", async ({ page }) => {
   // Pile every card into Backlog so the other columns are empty and very tall.
-  const board = await (await page.request.get("/api/board")).json();
+  const board = (await (await page.request.get(`/api/boards/${boardId}`)).json()).data;
   const allIds = Object.keys(board.cards);
   board.columns = board.columns.map((c: { id: string }) =>
     c.id === "col-backlog" ? { ...c, cardIds: allIds } : { ...c, cardIds: [] }
   );
-  await page.request.put("/api/board", { data: board });
+  await page.request.put(`/api/boards/${boardId}`, { data: board });
   await page.reload();
   await expect(page.getByRole("heading", { name: "Project Management Studio" })).toBeVisible();
 

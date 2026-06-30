@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 
 from app import ai, db
-from app.dependencies import require_user
+from app.dependencies import require_user_id
 from app.schemas import ChatRequest, ChatResponse
 
-router = APIRouter(prefix="/api", tags=["chat"])
+router = APIRouter(prefix="/api/boards", tags=["chat"])
 
 SYSTEM_PROMPT = """\
 You are a project management assistant inside a Kanban board app.
@@ -40,13 +40,17 @@ def build_chat_messages(board: dict, req: ChatRequest) -> list[dict]:
     return [system, *history, {"role": "user", "content": req.message}]
 
 
-@router.post("/chat")
-def chat(req: ChatRequest, user: str = Depends(require_user)) -> ChatResponse:
-    user_id = db.get_or_create_user(user)
-    board = db.get_or_create_board(user_id)
+@router.post("/{board_id}/chat")
+def chat(
+    board_id: int, req: ChatRequest, user_id: int = Depends(require_user_id)
+) -> ChatResponse:
+    board = db.get_board(board_id, user_id)
+    if board is None:
+        raise HTTPException(status_code=404, detail="Board not found")
     try:
         raw = ai.chat(
-            build_chat_messages(board, req), response_format={"type": "json_object"}
+            build_chat_messages(board["data"], req),
+            response_format={"type": "json_object"},
         )
         result = ChatResponse.model_validate_json(raw)
     except ValidationError:
@@ -54,5 +58,5 @@ def chat(req: ChatRequest, user: str = Depends(require_user)) -> ChatResponse:
     except Exception:
         raise HTTPException(status_code=502, detail="AI request failed")
     if result.board_update is not None:
-        db.save_board(user_id, result.board_update.model_dump())
+        db.save_board(board_id, user_id, result.board_update.model_dump())
     return result

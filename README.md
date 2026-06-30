@@ -1,6 +1,6 @@
 # Project Management Studio
 
-A project management web app: a single-board Kanban with a built-in AI assistant that can create, edit, and move cards through chat. It runs locally as a single Docker container.
+A project management web app: per-user accounts, multiple Kanban boards per user, and a built-in AI assistant that can create, edit, and move cards through chat. It runs locally as a single Docker container.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -16,11 +16,12 @@ A project management web app: a single-board Kanban with a built-in AI assistant
 
 ## Features
 
-- **Sign in** to reach your board, sign out to leave it
-- **Kanban board** with five columns whose titles can be renamed
+- **Accounts** - register a new user or sign in; passwords are hashed (PBKDF2, standard library)
+- **Multiple boards** per user, switched from a board bar; create, rename, and delete boards
+- **Kanban board** with columns whose titles can be renamed
 - **Cards** you can create, edit inline, delete, and drag between columns by mouse or keyboard
-- **AI assistant** in a sidebar that can create, edit, and move one or more cards in response to chat
-- **Persistent storage** so your board survives restarts
+- **AI assistant** in a sidebar, scoped to the active board, that can create, edit, and move one or more cards in response to chat
+- **Persistent storage** so your boards survive restarts
 
 ## Technology
 
@@ -91,7 +92,7 @@ cp .env.example .env
 scripts\start.bat
 ```
 
-Open <http://localhost:8000> and sign in with:
+Open <http://localhost:8000> and either create an account or sign in with the seeded default:
 
 - **Username:** `user`
 - **Password:** `password`
@@ -107,6 +108,7 @@ scripts\stop.bat
 
 ## Usage
 
+- **Boards** - switch between boards in the board bar; create one with "+ New board", rename or delete the active board. Each board is independent.
 - **Board** - rename a column by editing its title; add a card with the form at the bottom of a column; edit or delete a card with its buttons; drag a card within or between columns. Changes are saved automatically.
 - **Assistant** - open the sidebar with "Ask the assistant" and request changes such as "add a card to Review for the launch checklist" or "move everything in Backlog to Done". When the assistant changes the board, it refreshes automatically. Replies typically take 20-50 seconds, as the model reads and returns the full board on each request.
 

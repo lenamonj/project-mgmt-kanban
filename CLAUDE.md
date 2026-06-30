@@ -29,10 +29,12 @@ Whole app (repo root): `scripts/start.bat` builds and launches via `docker compo
 
 - E2E tests require `uv` on PATH: Playwright's `webServer` builds the frontend and serves it through uvicorn against the real backend at `http://127.0.0.1:8000`, not `next start`.
 - Playwright runs serial (`workers: 1`) on purpose: all tests share the single user's one board row, so concurrent writes race. The `login` helper resets the board to seed for determinism.
-- AI `/api/chat` calls take 20-50s (the model reads and returns the whole board each call). E2E mocks `/api/chat`.
-- Keep `backend/app/seed.py` `DEFAULT_BOARD` in sync with `frontend/src/lib/kanban.ts` `initialData`.
+- AI chat calls (`POST /api/boards/{id}/chat`) take 20-50s (the model reads and returns the whole board each call). E2E mocks `**/api/boards/*/chat`.
+- Keep `backend/app/seed.py` in sync with `frontend/src/lib/kanban.ts`: `DEFAULT_BOARD` mirrors `initialData`, and `new_board_data()` mirrors `emptyBoard()`. `test_seed_parity.py` checks the first.
 - `OPENROUTER_API_KEY` in `.env` is required for the AI assistant (model `openai/gpt-oss-120b` via OpenRouter).
-- Hardcoded MVP auth: `user` / `password`.
+- Auth: self-service registration plus a seeded default user `user` / `password`. Passwords are PBKDF2 hashed (`app/security.py`); the session cookie carries `user_id`.
+- The schema migrates forward on startup (`db._migrate`); the old one-board-per-user DB is rebuilt into the one-to-many shape automatically.
+- E2E uses an isolated database (`DB_PATH=backend/data/e2e.sqlite3`, set in `e2e-server.mjs`); the `login` helper trims each run to one seeded board.
 
 ## Frontend specifics
 

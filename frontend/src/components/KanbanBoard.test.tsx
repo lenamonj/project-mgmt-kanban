@@ -5,7 +5,13 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { initialData } from "@/lib/kanban";
 
 vi.mock("@/lib/api", () => ({
-  getBoard: vi.fn(async () => structuredClone(initialData)),
+  getBoard: vi.fn(async (id: number) => ({
+    id,
+    name: "My Board",
+    created_at: "",
+    updated_at: "",
+    data: structuredClone(initialData),
+  })),
   saveBoard: vi.fn(async () => {}),
   chat: vi.fn(async () => ({ reply: "ok", board_update: null })),
 }));
@@ -19,12 +25,12 @@ describe("KanbanBoard", () => {
   });
 
   it("renders five columns from the loaded board", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard boardId={1} />);
     expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 
   it("renames a column", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard boardId={1} />);
     const column = await getFirstColumn();
     const input = within(column).getByLabelText(/column title/i);
     await userEvent.clear(input);
@@ -33,7 +39,7 @@ describe("KanbanBoard", () => {
   });
 
   it("adds and removes a card", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard boardId={1} />);
     const column = await getFirstColumn();
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,
@@ -58,7 +64,7 @@ describe("KanbanBoard", () => {
   });
 
   it("edits an existing card", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard boardId={1} />);
     const column = await getFirstColumn();
 
     await userEvent.click(

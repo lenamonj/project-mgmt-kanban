@@ -6,8 +6,10 @@ import { chat, type ChatMessage } from "@/lib/api";
 import type { BoardData } from "@/lib/kanban";
 
 export const ChatSidebar = ({
+  boardId,
   onBoardUpdate,
 }: {
+  boardId: number;
   onBoardUpdate: (board: BoardData) => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -31,7 +33,7 @@ export const ChatSidebar = ({
     setSending(true);
     setError(null);
     try {
-      const result = await chat(text, history);
+      const result = await chat(boardId, text, history);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: result.reply },
