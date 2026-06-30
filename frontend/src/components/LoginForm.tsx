@@ -66,7 +66,7 @@ export const LoginForm = ({ onAuthed }: { onAuthed: () => void }) => {
         </label>
 
         {error ? (
-          <p data-testid="login-error" className="text-sm font-medium text-[var(--secondary-purple)]">
+          <p role="alert" data-testid="login-error" className="text-sm font-medium text-[var(--secondary-purple)]">
             {error}
           </p>
         ) : null}

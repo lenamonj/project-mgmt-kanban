@@ -108,20 +108,13 @@ export const placeCardInColumn = (
 const isColumnId = (columns: Column[], id: string) =>
   columns.some((column) => column.id === id);
 
-const findColumnId = (columns: Column[], id: string) => {
-  if (isColumnId(columns, id)) {
-    return id;
-  }
-  return columns.find((column) => column.cardIds.includes(id))?.id;
-};
-
 export const moveCard = (
   columns: Column[],
   activeId: string,
   overId: string
 ): Column[] => {
-  const activeColumnId = findColumnId(columns, activeId);
-  const overColumnId = findColumnId(columns, overId);
+  const activeColumnId = columnIdForItem(columns, activeId);
+  const overColumnId = columnIdForItem(columns, overId);
 
   if (!activeColumnId || !overColumnId) {
     return columns;

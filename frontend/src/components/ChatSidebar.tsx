@@ -109,6 +109,7 @@ export const ChatSidebar = ({
         ) : null}
         {error ? (
           <p
+            role="alert"
             data-testid="chat-error"
             className="text-sm font-medium text-[var(--secondary-purple)]"
           >
